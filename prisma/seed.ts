@@ -104,13 +104,15 @@ async function main() {
     },
   });
 
-  const categories = await Promise.all(
-    CATEGORIES.map((c) => prisma.category.create({ data: c })),
-  );
+  const categories = [];
+  for (const c of CATEGORIES) {
+    categories.push(await prisma.category.create({ data: c }));
+  }
 
-  const brands = await Promise.all(
-    BRANDS.map((name) => prisma.brand.create({ data: { name, slug: slugify(name) } })),
-  );
+  const brands = [];
+  for (const name of BRANDS) {
+    brands.push(await prisma.brand.create({ data: { name, slug: slugify(name) } }));
+  }
 
   const puneCoords = [
     { lat: 18.5204, lng: 73.8567 },
