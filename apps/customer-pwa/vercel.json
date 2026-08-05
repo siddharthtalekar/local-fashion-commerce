@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd ../.. && npm run build --workspace=@local-fashion/customer-pwa",
+  "outputDirectory": ".next",
+  "installCommand": "cd ../.. && npm install",
+  "framework": "nextjs"
+}

@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: localfashion
+          POSTGRES_PASSWORD: localfashion
+          POSTGRES_DB: localfashion
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://localfashion:localfashion@localhost:5432/localfashion?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run db:seed
+
+      - run: npm run build --workspace=@local-fashion/shared-types
+      - run: npm run build --workspace=@local-fashion/ui
+      - run: npm run build --workspace=@local-fashion/api
+      - run: npm run build --workspace=@local-fashion/customer-pwa
+      - run: npm run build --workspace=@local-fashion/retailer-dashboard

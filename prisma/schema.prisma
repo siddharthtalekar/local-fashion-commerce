@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  customer
+  retailer
+  admin
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum OfferType {
+  flat
+  percent
+  bogo
+}
+
+enum IntentType {
+  call
+  whatsapp
+  directions
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  role         String @default("customer")
+  cityId       String?
+  city         City?    @relation(fields: [cityId], references: [id])
+  stores       Store[]
+  wishlists    Wishlist[]
+  cart         Cart?
+  addresses    Address[]
+  orders       Order[]
+  paymentMethods PaymentMethod[]
+  walletTransactions WalletTransaction[]
+  notifications Notification[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  size      String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cartId])
+  @@index([productId])
+  @@unique([cartId, productId, size, color]) // Prevent duplicates of exact same variant in same cart
+}
+
+model City {
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique
+  state   String
+  stores  Store[]
+  users   User[]
+}
+
+model Store {
+  id                 String             @id @default(cuid())
+  name               String
+  slug               String             @unique
+  description        String?
+  address            String
+  cityId             String
+  city               City               @relation(fields: [cityId], references: [id])
+  latitude           Float
+  longitude          Float
+  phone              String
+  whatsapp           String
+  coverImageUrl      String?
+  categoryTags       String @default("[]")
+  openingHours       Json?
+  verificationStatus String @default("pending")
+  ownerId            String
+  owner              User               @relation(fields: [ownerId], references: [id])
+  products           Product[]
+  offers             Offer[]
+  orders             Order[]
+  intentEvents       IntentEvent[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([cityId])
+  @@index([latitude, longitude])
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String
+  slug     String     @unique
+  imageUrl String?
+  parentId String?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+}
+
+model Brand {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String
+  description     String?
+  storeId         String
+  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  brandId         String
+  brand           Brand          @relation(fields: [brandId], references: [id])
+  price           Int
+  discountedPrice Int?
+  colors          String @default("[]")
+  tags            String @default("[]")
+  searchVector    String?
+  sizes           ProductSize[]
+  images          ProductImage[]
+  offers          Offer[]
+  intentEvents    IntentEvent[]
+  wishlists       Wishlist[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([storeId, slug])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([price])
+}
+
+model ProductSize {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      String
+  inStock   Boolean @default(true)
+
+  @@unique([productId, size])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int     @default(0)
+}
+
+model Offer {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  type        String
+  value       Int?
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  validFrom   DateTime
+  validTo     DateTime
+  createdAt   DateTime  @default(now())
+
+  @@index([storeId])
+  @@index([validFrom, validTo])
+}
+
+model IntentEvent {
+  id        String     @id @default(cuid())
+  type      String
+  storeId   String
+  store     Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product?   @relation(fields: [productId], references: [id], onDelete: SetNull)
+  metadata  Json?
+  createdAt DateTime   @default(now())
+
+  @@index([storeId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   @default("Home") // Home, Work, etc.
+  line1     String
+  line2     String?
+  landmark  String?
+  pincode   String
+  city      String
+  state     String
+  isDefault Boolean  @default(false)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  status      String      @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  totalAmount Int
+  items       OrderItem[]
+  addressId   String?
+  address     Address?    @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  price     Int
+  size      String?
+  color     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+}
+
+model PaymentMethod {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // card, upi
+  details   Json     // stores masked card details or upi id securely
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // credit, debit
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
