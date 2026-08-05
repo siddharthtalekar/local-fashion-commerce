@@ -50,7 +50,7 @@ export default async function StorePage({ params }: Props) {
     },
   };
 
-  const mapSrc = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${store.latitude},${store.longitude}`;
+  const mapSrc = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || ''}&q=${store.latitude},${store.longitude}`;
 
   return (
     <div className="pb-24 min-h-screen bg-neutral-50/50">
