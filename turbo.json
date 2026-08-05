@@ -3,6 +3,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": [
+        "NEXT_PUBLIC_API_URL",
+        "API_URL_SERVER",
+        "NEXT_PUBLIC_PILOT_CITY_SLUG",
+        "NEXT_PUBLIC_PLATFORM_NAME",
+        "NEXT_PUBLIC_GOOGLE_MAPS_KEY"
+      ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {

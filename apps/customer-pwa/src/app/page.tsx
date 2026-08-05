@@ -61,27 +61,39 @@ function getProductImage(p: ProductSummaryDto, index: number): string {
 
 async function getHomeData() {
   const citySlug = PILOT_CITY_SLUG;
-  const [productsRes, stores, categories] = await Promise.all([
-    apiFetch<{ data: ProductSummaryDto[] }>(`/products?citySlug=${citySlug}&limit=16`),
-    apiFetch<StoreSummaryDto[]>(`/stores?citySlug=${citySlug}`),
-    apiFetch<CategoryDto[]>(`/categories`),
-  ]);
+  try {
+    const [productsRes, stores, categories] = await Promise.all([
+      apiFetch<{ data: ProductSummaryDto[] }>(`/products?citySlug=${citySlug}&limit=16`),
+      apiFetch<StoreSummaryDto[]>(`/stores?citySlug=${citySlug}`),
+      apiFetch<CategoryDto[]>(`/categories`),
+    ]);
 
-  return {
-    products: productsRes.data,
-    deals: productsRes.data
-      .filter((p) => p.discountedPrice && p.discountedPrice < p.price)
-      .sort((a, b) => {
-        const discountA = (a.price - a.discountedPrice!) / a.price;
-        const discountB = (b.price - b.discountedPrice!) / b.price;
-        return discountB - discountA;
-      })
-      .slice(0, 8),
-    newArrivals: productsRes.data.slice().reverse().slice(0, 8),
-    stores: stores.slice(0, 8),
-    categories,
-    citySlug,
-  };
+    return {
+      products: productsRes.data,
+      deals: productsRes.data
+        .filter((p) => p.discountedPrice && p.discountedPrice < p.price)
+        .sort((a, b) => {
+          const discountA = (a.price - a.discountedPrice!) / a.price;
+          const discountB = (b.price - b.discountedPrice!) / b.price;
+          return discountB - discountA;
+        })
+        .slice(0, 8),
+      newArrivals: productsRes.data.slice().reverse().slice(0, 8),
+      stores: stores.slice(0, 8),
+      categories,
+      citySlug,
+    };
+  } catch (error) {
+    console.error("Failed to fetch home data during build, falling back to empty state:", error);
+    return {
+      products: [],
+      deals: [],
+      newArrivals: [],
+      stores: [],
+      categories: [],
+      citySlug,
+    };
+  }
 }
 
 const trendingSearches = [
