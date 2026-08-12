@@ -19,6 +19,7 @@ import { OrdersModule } from './orders/orders.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BrandsModule } from './brands/brands.module';
 import { AddressesModule } from './addresses/addresses.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AddressesModule } from './addresses/addresses.module';
     BrandsModule,
     AddressesModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
