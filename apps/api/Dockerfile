@@ -23,5 +23,5 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/
 COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/prisma ./prisma
-EXPOSE 4000
+
 CMD ["node", "apps/api/dist/main.js"]
