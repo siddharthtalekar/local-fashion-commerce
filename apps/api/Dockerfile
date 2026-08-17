@@ -16,6 +16,8 @@ RUN npm run build --workspace=@local-fashion/api
 
 FROM base AS runner
 ENV NODE_ENV=production
+ENV PORT=4000
+EXPOSE 4000
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
